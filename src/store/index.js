@@ -108,40 +108,35 @@ export default new Vuex.Store({
             commit('setUser', {userId: user['.key'], user})
         },
 
-        fetchThread({state, commit}, {id}) {
-            console.log('Fetch thread...');
+        fetchThread({dispatch}, {id}) {
+            return dispatch('fetchItem', {resource: 'threads', id})
+        },
+
+        fetchUser({dispatch}, {id}) {
+            return dispatch('fetchItem', {resource: 'users', id})
+        },
+
+        fetchPost({dispatch}, {id}) {
+           return dispatch('fetchItem', {resource: 'posts', id})
+        },
+
+        fetchPosts({dispatch}, {ids}) {
+            return dispatch('fetchItems', {resource: 'posts', ids})
+        },
+
+        fetchItem({state, commit}, {id, resource}) {
+            console.log(`Fetch ${resource}...`);
             return new Promise((resolve, reject) => {
                 // fetch thread
-                firebase.database().ref('threads').child(id).once('value', snapshot => {
-                    const thread = snapshot.val()
-                    commit('setThread', {threadId: snapshot.key, thread: {...thread, '.key': snapshot.key}})
-                    resolve(state.threads[id])
+                firebase.database().ref(resource).child(id).once('value', snapshot => {
+                    commit('setItem', {resource, id: snapshot.key, item: snapshot.val()})
+                    resolve(state[resource][id])
                 })
             })
         },
 
-        fetchUser({state, commit}, {id}) {
-            console.log('Fetch Users...');
-            return new Promise((resolve, reject) => {
-                // fetch thread
-                firebase.database().ref('users').child(id).once('value', snapshot => {
-                    const user = snapshot.val()
-                    commit('setUser', {userId: snapshot.key, user: {...user, '.key': snapshot.key}})
-                    resolve(state.users[id])
-                })
-            })
-        },
-
-        fetchPost({state, commit}, {id}) {
-            console.log('Fetch Posts...');
-            return new Promise((resolve, reject) => {
-                // fetch thread
-                firebase.database().ref('posts').child(id).once('value', snapshot => {
-                    const post = snapshot.val()
-                    commit('setPost', {postId: snapshot.key, post: {...post, '.key': snapshot.key}})
-                    resolve(state.posts[id])
-                })
-            })
+        fetchItems({dispatch}, {ids, resource}) {
+            return Promise.all(ids.map(id => dispatch('fetchItem', {id, resource}))) // collect all promises into array
         }
     },
 
@@ -156,6 +151,11 @@ export default new Vuex.Store({
 
         setThread(state, { thread, threadId }) {
             Vue.set(state.threads, threadId, thread);
+        },
+
+        setItem(state, { item, id, resource }) {
+            item['.key'] = id
+            Vue.set(state[resource], id, item);
         },
 
         appendPostToThread: makeAppendChildToParentMutation({parent: 'threads', child: 'posts'}),
