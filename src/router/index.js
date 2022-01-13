@@ -8,10 +8,13 @@ import PageCategory from '@/pages/PageCategory'
 import PageProfile from '@/pages/PageProfile'
 import ThreadCreate from '@/pages/PageThreadCreate'
 import PageThreadEdit from '@/pages/PageThreadEdit'
+import PageRegister from '@/pages/PageRegister'
+import PageSignIn from '@/pages/PageSignIn'
+import store from '@/store'
 
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
     routes: [
         {
             path: '/',
@@ -22,13 +25,15 @@ export default new Router({
             path: '/me',
             name:"Profile",
             component: PageProfile,
-            props: true
+            props: true,
+            meta: { requiresAuth: true }
         },
         {
             path: '/me/edit',
             name:"ProfileEdit",
             component: PageProfile,
-            props: {edit: true} // passing value throgh props if match with edit page
+            props: {edit: true},// passing value throgh props if match with edit page
+            meta: { requiresAuth: true }
         },
         {
             path: '/forum/:id',
@@ -46,7 +51,8 @@ export default new Router({
             path: '/thread/create/:forumId',
             name:"ThreadCreate",
             component: ThreadCreate,
-            props: true
+            props: true,
+            meta: { requiresAuth: true }
         },
         {
             path: '/thread/:id',
@@ -61,6 +67,27 @@ export default new Router({
             props: true
         },
         {
+            path: '/register',
+            name:"Register",
+            component: PageRegister,
+            meta: { requiresGuest: true }
+        },
+        {
+            path: '/signin',
+            name:"Sigin",
+            component: PageSignIn,
+            meta: { requiresGuest: true }
+        },
+        {
+            path: '/logout',
+            name:"SignOut",
+            meta: { requiresAuth: true },
+            beforeEnter(to, from, next) {
+                store.dispatch('signOut')
+                .then(() => next({name: 'Home'}))
+            }
+        },
+        {
             path: '*',
             name: 'NotFound',
             component: PageNotFound
@@ -68,3 +95,34 @@ export default new Router({
     ],
     mode: 'history'
 })
+
+// middleware
+// Check the routing navigation
+// using meta filed and global guard to protected routers
+router.beforeEach((to, from, next) => {
+    console.log(`navigatin to ${to.name} from ${from.name}`)
+    store.dispatch('initAuthentication') 
+        .then(user => {
+        if(to.matched.some(route => route.meta.requiresAuth)) {
+        
+            // protected route
+            if(user) {
+                next()
+            } else {
+                // passing params to store old path that user try to visit, after login success will back
+                next({name: 'Sigin', query: {redirectTo: to.path}}) 
+            }
+        } else if(to.matched.some(route => route.meta.requiresGuest)) {
+            // protected route
+            if(!user) {
+                next()
+            } else {
+                next({name: 'Home'})
+            }
+        } else {
+            next()
+        }
+    })
+})
+
+export default router

@@ -1,17 +1,27 @@
 <template>
-  <div class="home-wrapper push-top">
-      <h1>Welcome to the Forum</h1>
-      <CategoryList :categories="categories" />
+  <div class="home-wrapper">
+    <div v-if="asyncDataStatus_ready" class="push-top">
+        <h1>Welcome to the Forum </h1>
+        <CategoryList :categories="categories" />
+    </div>
   </div>
 </template>
 
 <script>
 import CategoryList from '@/components/CategoryList.vue'
+import asyncDataStatus from '@/mixins/asyncDataStatus'
+var conf = require('dotenv').config();
 
 export default {
     components: {
         CategoryList
     },
+    data() {
+        return {
+            ready: false
+        }
+    },
+    mixins: [asyncDataStatus],
     computed: {
         categories() {
             return Object.values(this.$store.state.categories)
@@ -20,7 +30,10 @@ export default {
     beforeCreate() {
         this.$store.dispatch('fetchCategories')
         .then(categories => {
-            categories.forEach(category => this.$store.dispatch('fetchForums', {ids: Object.keys(category.forums)}))
+            Promise.all(categories.map(category => this.$store.dispatch('fetchForums', {ids: Object.keys(category.forums)})))
+            .then(() => {
+                this.asyncDataStatus_fetched();
+            })
         })
     }
 }

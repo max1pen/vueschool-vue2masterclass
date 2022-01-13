@@ -35,6 +35,7 @@ import { mapGetters } from 'vuex'
 
 import UserProfileCard from '@/components/UserProfileCard'
 import UserProfileCardEditor from '@/components/UserProfileCardEditor'
+import asyncDataStatus from '@/mixins/asyncDataStatus'
 
 export default {
     components: {
@@ -42,6 +43,7 @@ export default {
         UserProfileCard,
         UserProfileCardEditor
     },
+    mixins: [asyncDataStatus],
     props: {
         edit: {
             type: Boolean,
@@ -61,12 +63,12 @@ export default {
         },
 
         userPosts() {
-            if(this.user.posts) {
-                return Object.values(this.$store.state.posts)
-                .filter(post => post.userId === this.user['.key'])
-            }
-            return []
+            return this.$store.getters.userPosts(this.user['.key'])
         }
+    },
+    created() {
+        this.$store.dispatch('fetchPosts', {ids: this.user.posts})
+        .then(() => this.asyncDataStatus_fetched())
     }
 }
 </script>

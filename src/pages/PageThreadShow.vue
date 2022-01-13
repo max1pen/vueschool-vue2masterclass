@@ -1,5 +1,5 @@
 <template>
-  <div v-if="thread && user" class="thread-wrapper">
+  <div v-if="asyncDataStatus_ready" class="thread-wrapper">
         <div class="col-large push-top">
           <h1>
               {{thread.title}}
@@ -17,7 +17,13 @@
           </p>
           <PostList :posts="posts" />
             <PostEditor 
+            v-if="$store.getters.authUser"
             :threadId="id" />
+            <div v-else class="text-center" style="margin-bottom: 50px;">
+                <router-link :to="{name: 'Sigin', query: {redirectTo: $route.path}}">Sign in</router-link> or 
+                <router-link :to="{name: 'Register', query: {redirectTo: $route.path}}">Register</router-link>
+                 to post a reply.
+            </div>
       </div>
   </div>
 </template>
@@ -26,6 +32,7 @@
 import PostList from '@/components/PostList'
 import PostEditor from '@/components/PostEditor'
 import { countObjectProperties }  from '@/utils'
+import asyncDataStatus from '@/mixins/asyncDataStatus'
 
 export default {
     components: {
@@ -38,6 +45,7 @@ export default {
             type: String
         }
     },
+    mixins: [asyncDataStatus],
     computed: {
         thread() {
             return this.$store.state.threads[this.id]
@@ -68,22 +76,13 @@ export default {
             // fetch user
             this.$store.dispatch('fetchUser', {id: thread.userId})
 
-            this.$store.dispatch('fetchPosts', {ids: Object.keys(thread.posts)})
-            .then(posts => {
-                posts.forEach(post => {
-                    this.$store.dispatch('fetchUser', {id: post.userId})
-                })
-            })
-
-            // Object.keys(thread.posts).forEach(postId => {
-            //     // fetch post
-            //     this.$store.dispatch('fetchPost', {id: postId})
-            //     .then(post => {
-            //         // fetch user
-            //         this.$store.dispatch('fetchUser', {id: post.userId})
-            //     })
-            // })
+            return this.$store.dispatch('fetchPosts', {ids: Object.keys(thread.posts)})
+            
         })
+        .then(posts => {
+            Promise.all(posts.map(post => {this.$store.dispatch('fetchUser', {id: post.userId})}))
+        })
+        .then(()=> { this.asyncDataStatus_fetched() })
     }
  }
 </script>
