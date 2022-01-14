@@ -24,17 +24,13 @@ export default {
     mixins: [asyncDataStatus],
     computed: {
         categories() {
-            return Object.values(this.$store.state.categories)
+            return Object.values(this.$store.state.categories.items)
         }
     },
-    beforeCreate() {
-        this.$store.dispatch('fetchCategories')
-        .then(categories => {
-            Promise.all(categories.map(category => this.$store.dispatch('fetchForums', {ids: Object.keys(category.forums)})))
-            .then(() => {
-                this.asyncDataStatus_fetched();
-            })
-        })
+    created() {
+        this.$store.dispatch('categories/fetchAllCategories')
+        .then(categories => Promise.all(categories.map(category => this.$store.dispatch('forums/fetchForums', {ids: Object.keys(category.forums)}))))
+        .then(() => this.asyncDataStatus_fetched())
     }
 }
 </script>

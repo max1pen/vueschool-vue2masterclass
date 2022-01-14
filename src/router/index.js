@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import PageHome from '@/pages/PageHome'
 import PageThreadShow from '@/pages/PageThreadShow'
 import PageNotFound from '@/pages/PageNotFound'
-import PageForumShow from '@/pages/PageForumShow'
+import PageForum from '@/pages/PageForum'
 import PageCategory from '@/pages/PageCategory'
 import PageProfile from '@/pages/PageProfile'
 import ThreadCreate from '@/pages/PageThreadCreate'
@@ -38,7 +38,7 @@ const router = new Router({
         {
             path: '/forum/:id',
             name:"Forum",
-            component: PageForumShow,
+            component: PageForum,
             props: true
         },
         {
@@ -101,7 +101,7 @@ const router = new Router({
 // using meta filed and global guard to protected routers
 router.beforeEach((to, from, next) => {
     console.log(`navigatin to ${to.name} from ${from.name}`)
-    store.dispatch('initAuthentication') 
+    store.dispatch('auth/initAuthentication') 
         .then(user => {
         if(to.matched.some(route => route.meta.requiresAuth)) {
         

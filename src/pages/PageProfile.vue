@@ -24,7 +24,10 @@
 
               <hr>
 
-              <PostList :posts="userPosts" />
+              <PostList v-if="!userNoPost" :posts="userPosts" />
+              <div class="user-no-post" v-else>
+                  User haven't post anything yet.
+              </div>
           </div>
       </div>
 </template>
@@ -44,6 +47,11 @@ export default {
         UserProfileCardEditor
     },
     mixins: [asyncDataStatus],
+    data() {
+        return {
+            userNoPost: false
+        }
+    },
     props: {
         edit: {
             type: Boolean,
@@ -52,27 +60,34 @@ export default {
     },
     computed: {
         ...mapGetters({
-            user: 'authUser'
+            user: 'auth/authUser'
         }),
         userThreadsCount() {
-            return this.$store.getters.userThreadsCount(this.user['.key'])
+            return this.userNoPost ? 0 : this.$store.getters['users/userThreadsCount'](this.user['.key'])
         },
 
         userPostsCount() {
-            return this.$store.getters.userPostsCount(this.user['.key'])
+            return  this.userNoPost? 0 : this.$store.getters['users/userPostsCount'](this.user['.key'])
         },
 
         userPosts() {
-            return this.$store.getters.userPosts(this.user['.key'])
+            return this.$store.getters['users/userPosts'](this.user['.key'])
         }
     },
     created() {
-        this.$store.dispatch('fetchPosts', {ids: this.user.posts})
-        .then(() => this.asyncDataStatus_fetched())
+        if(this.user.posts == null) {
+            this.userNoPost = true
+            this.asyncDataStatus_fetched()
+        } else {
+            this.$store.dispatch('posts/fetchPosts', {ids: this.user.posts})
+            .then(() => this.asyncDataStatus_fetched())
+        }
     }
 }
 </script>
 
-<style>
-
+<style scoped>
+    .user-no-post {
+        font-style: italic;
+    }
 </style>

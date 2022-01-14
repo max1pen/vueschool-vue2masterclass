@@ -17,7 +17,7 @@
           </p>
           <PostList :posts="posts" />
             <PostEditor 
-            v-if="$store.getters.authUser"
+            v-if="$store.getters['auth/authUser']"
             :threadId="id" />
             <div v-else class="text-center" style="margin-bottom: 50px;">
                 <router-link :to="{name: 'Sigin', query: {redirectTo: $route.path}}">Sign in</router-link> or 
@@ -48,15 +48,15 @@ export default {
     mixins: [asyncDataStatus],
     computed: {
         thread() {
-            return this.$store.state.threads[this.id]
+            return this.$store.state.threads.items[this.id]
         },
         
         user() {
-            return this.$store.state.users[this.thread.userId]
+            return this.$store.state.users.items[this.thread.userId]
         },
 
         repliesCount() {
-            return this.$store.getters.threadRepliesCount(this.thread['.key'])
+            return this.$store.getters['threads/threadRepliesCount'](this.thread['.key'])
         },
 
         countributorsCount() {
@@ -71,16 +71,16 @@ export default {
     },
     created() {
         // fetch thread
-        this.$store.dispatch('fetchThread', {id: this.id})
+        this.$store.dispatch('threads/fetchThread', {id: this.id})
         .then(thread => {
             // fetch user
-            this.$store.dispatch('fetchUser', {id: thread.userId})
+            this.$store.dispatch('users/fetchUser', {id: thread.userId})
 
-            return this.$store.dispatch('fetchPosts', {ids: Object.keys(thread.posts)})
+            return this.$store.dispatch('posts/fetchPosts', {ids: Object.keys(thread.posts)})
             
         })
         .then(posts => {
-            Promise.all(posts.map(post => {this.$store.dispatch('fetchUser', {id: post.userId})}))
+            Promise.all(posts.map(post => {this.$store.dispatch('users/fetchUser', {id: post.userId})}))
         })
         .then(()=> { this.asyncDataStatus_fetched() })
     }

@@ -22,12 +22,12 @@ export default {
     mixins: [asyncDataStatus],
     computed: {
         category() {
-            return this.$store.state.categories[this.id]
+            return this.$store.state.categories.items[this.id]
         }
     },
     created() {
-        this.$store.dispatch('fetchCategory', {id: this.id})
-        .then(category => this.$store.dispatch('fetchForums', {ids: category.forums}))
+        this.$store.dispatch('categories/fetchCategory', {id: this.id})
+        .then(category => this.$store.dispatch('forums/fetchForums', {ids: category.forums}))
         .then(() => { this.asyncDataStatus_fetched() })
     }
 }

@@ -31,7 +31,7 @@ export default {
     mixins: [asyncDataStatus],
     computed: {
         forum() {
-            return this.$store.state.forums[this.forumId]
+            return this.$store.state.forums.items[this.forumId]
         },
         hasUnsavedChanges() {
             return (this.$refs.editor.form.title || this.$refs.editor.form.text) && !this.saved
@@ -39,7 +39,7 @@ export default {
     },
     methods: {
         save({title, text}) {
-            this.$store.dispatch('createThread', {
+            this.$store.dispatch('threads/createThread', {
                 forumId: this.forum['.key'],
                 title,
                 text
@@ -54,7 +54,7 @@ export default {
     },
 
     created() {
-        this.$store.dispatch('fetchForum', {id: this.forumId})
+        this.$store.dispatch('forums/fetchForum', {id: this.forumId})
         .then(() => { this.asyncDataStatus_fetched() })
     },
 
